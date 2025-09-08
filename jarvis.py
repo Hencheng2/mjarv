@@ -19,8 +19,8 @@ recognizer = sr.Recognizer()
 # Initialize OpenAI client with hardcoded API key
 client = OpenAI(api_key="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")
 
-# OpenWeatherMap API key (replace with your actual key)
-weather_api_key = "YOUR_WEATHER_API_KEY"
+# OpenWeatherMap API key (hardcoded as provided)
+weather_api_key = "cd0ef82d72645c018b32d07be1f6744d"
 
 # Simple reminder storage (in-memory; for persistence, use a file or database)
 reminders = []
