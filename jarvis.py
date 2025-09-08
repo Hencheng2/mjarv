@@ -3,7 +3,10 @@ import pyttsx3
 import webbrowser
 import datetime
 import os
+import requests
+import json
 from openai import OpenAI
+import random  # For joke feature
 
 # Initialize text-to-speech engine
 engine = pyttsx3.init()
@@ -13,8 +16,14 @@ engine.setProperty('voice', voices[0].id)  # Set voice (0 for male, 1 for female
 # Initialize speech recognizer
 recognizer = sr.Recognizer()
 
-# Initialize OpenAI client (replace with your API key)
+# Initialize OpenAI client with hardcoded API key
 client = OpenAI(api_key="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")
+
+# OpenWeatherMap API key (replace with your actual key)
+weather_api_key = "YOUR_WEATHER_API_KEY"
+
+# Simple reminder storage (in-memory; for persistence, use a file or database)
+reminders = []
 
 def speak(text):
     """Convert text to speech."""
@@ -49,6 +58,39 @@ def get_ai_response(prompt):
     except Exception as e:
         return f"Error with AI response: {str(e)}"
 
+def get_weather(city):
+    """Fetch weather data for a city using OpenWeatherMap API."""
+    base_url = "http://api.openweathermap.org/data/2.5/weather"
+    params = {"q": city, "appid": weather_api_key, "units": "metric"}
+    try:
+        response = requests.get(base_url, params=params)
+        data = response.json()
+        if data["cod"] == 200:
+            weather_desc = data["weather"][0]["description"]
+            temp = data["main"]["temp"]
+            return f"The weather in {city} is {weather_desc} with a temperature of {temp}°C."
+        else:
+            return "Sorry, I couldn't fetch the weather data. Please check the city name."
+    except Exception as e:
+        return f"Error fetching weather: {str(e)}"
+
+def set_reminder(reminder_text):
+    """Set a simple reminder."""
+    reminders.append(reminder_text)
+    return f"Reminder set: {reminder_text}"
+
+def get_reminders():
+    """Get list of reminders."""
+    if reminders:
+        return "Your reminders are: " + "; ".join(reminders)
+    else:
+        return "You have no reminders set."
+
+def tell_joke():
+    """Tell a random joke using OpenAI."""
+    prompt = "Tell me a short, funny joke."
+    return get_ai_response(prompt)
+
 def execute_command(command):
     """Process and execute commands."""
     if "hello" in command:
@@ -62,6 +104,21 @@ def execute_command(command):
     elif "open youtube" in command:
         webbrowser.open("https://www.youtube.com")
         speak("Opening YouTube.")
+    elif "weather" in command:
+        # Simple parsing: assume "weather in [city]"
+        city = command.split("in")[-1].strip() if "in" in command else "London"  # Default city
+        weather_info = get_weather(city)
+        speak(weather_info)
+    elif "set reminder" in command:
+        reminder_text = command.replace("set reminder", "").strip()
+        response = set_reminder(reminder_text)
+        speak(response)
+    elif "get reminders" in command or "what are my reminders" in command:
+        response = get_reminders()
+        speak(response)
+    elif "tell a joke" in command:
+        joke = tell_joke()
+        speak(joke)
     elif "exit" in command or "stop" in command:
         speak("Goodbye!")
         return False
